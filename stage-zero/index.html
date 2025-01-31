@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Profile Card</title>
+    <link rel="stylesheet" href="style.css" />
+    <!-- Font Awesome CDN for social icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+  </head>
+  <body>
+    <div class="profile-card" data-testid="profileCard">
+      <img
+        src="./public/profile-photo.jpg"
+        alt="Profile Picture"
+        class="profile-picture"
+        data-testid="profilePicture"
+      />
+      <div class="profile-content">
+        <h1 class="full-name" data-testid="fullName">Joseph Kibuchi</h1>
+        <h2 class="job-title" data-testid="jobTitle">
+          FullStack Software Engineer
+        </h2>
+        <p class="short-bio" data-testid="shortBio">
+          Software Engineer with marketing expertise, transitioning from a
+          successful marketing career to full-stack development. Combines
+          technical skills with deep understanding of customer needs and
+          business value, to build customer-centric solutions.
+        </p>
+        <div class="current-location" data-testid="currentLocation">
+          🌍 Nairobi, KENYA
+        </div>
+        <a
+          href="mailto:kibuchijw@gmail.com"
+          class="email-address"
+          data-testid="emailAddress"
+        >
+          📬 kibuchijw@gmail.com
+        </a>
+        <ul class="social-links" data-testid="socialLinks">
+          <li>
+            <a href="https://linkedin.com/in/QUxPTA">
+              <i class="fab fa-linkedin"></i>
+            </a>
+          </li>
+          <li>
+            <a href="https://github.com/QUxPTA">
+              <i class="fab fa-github"></i>
+            </a>
+          </li>
+          <li>
+            <a href="https://twitter.com/QUxPTA">
+              <i class="fab fa-twitter"></i>
+            </a>
+          </li>
+        </ul>
+        <div class="current-time-utc" data-testid="currentTimeUTC">
+          Current Time UTC:
+          <span id="current-time" data-testid="currentTimeUTC"> </span>
+        </div>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
