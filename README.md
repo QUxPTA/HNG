@@ -5,3 +5,7 @@ This repo is a catalog of the various tasks undertaken in the [HNG](https://hng.
 ## [Stage Zero](./stage-zero/)
 
 The very first stage of the internship. Here is a live link to the task implementation: [Profile Card ](https://quxpta.github.io/HNG/stage-zero/)
+
+## [Stage One](./stage-one/)
+
+The second stage of the internship. Here is a live link to the task implementation: [Color Guessing Game ](https://fluffy-cendol-a75301.netlify.app/)
