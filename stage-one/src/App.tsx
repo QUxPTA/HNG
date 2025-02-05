@@ -214,6 +214,17 @@ function App() {
           </div>
         </div>
       )}
+      {/* Footer */}
+      <footer className='absolute bottom-4 left-0 right-0 text-center text-xs text-blue-200 hover:text-purple-600 transition-colors'>
+        <a
+          href='https://quxpta.codes'
+          target='_blank'
+          rel='noopener noreferrer'
+          className='hover:underline'
+        >
+          🌠 QUxPTA Built
+        </a>
+      </footer>
     </div>
   );
 }
