@@ -1,7 +1,13 @@
 import React from 'react';
+import Card from '@/components/Card';
+import StepOne from '@/components/StepOne';
 
 const Home = () => {
-  return <div></div>;
+  return (
+    <Card>
+      <StepOne />
+    </Card>
+  );
 };
 
 export default Home;
