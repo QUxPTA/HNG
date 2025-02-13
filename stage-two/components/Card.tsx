@@ -1,5 +1,4 @@
 import React, { ReactNode } from 'react';
-import StepOne from './StepOne';
 
 interface CardProps {
   children?: ReactNode;
@@ -9,11 +8,32 @@ interface CardProps {
 }
 
 const Card: React.FC<CardProps> = ({
-  children = <StepOne />,
+  children,
   className = '',
-  title = 'Ticket Selection',
+  title,
   stage = 'Step 1/3',
 }) => {
+  // Calculate progress bar width based on stage
+  const getProgressWidth = () => {
+    switch (stage) {
+      case 'Step 1/3':
+        return '20%';
+      case 'Step 2/3':
+        return '50%';
+      case 'Step 3/3':
+        return '100%';
+      default:
+        return '20%';
+    }
+  };
+
+  // Default titles for each stage
+  const defaultTitles = {
+    'Step 1/3': 'Ticket Selection',
+    'Step 2/3': 'Attendee Details',
+    'Step 3/3': 'Ready',
+  };
+
   return (
     <div
       className={`
@@ -44,7 +64,7 @@ const Card: React.FC<CardProps> = ({
             text-[#FFFFFF]
           '
         >
-          {title}
+          {title || defaultTitles[stage as keyof typeof defaultTitles]}
         </h2>
         <span
           className='
@@ -61,7 +81,7 @@ const Card: React.FC<CardProps> = ({
       <div className='w-full h-2 bg-[#0E464F] rounded-full mb-6'>
         <div
           className='h-full bg-[#24A0B5] rounded-full'
-          style={{ width: '33.33%' }}
+          style={{ width: getProgressWidth() }}
         ></div>
       </div>
 
