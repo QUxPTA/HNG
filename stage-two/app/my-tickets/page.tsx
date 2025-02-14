@@ -39,20 +39,17 @@ const MyTicketsPage: React.FC = () => {
         <h1 className='text-3xl text-white text-center mb-12'>My Tickets</h1>
         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8'>
           {tickets.map((ticket, index) => (
-            <div 
-              key={index} 
-              className='relative w-full max-w-[400px] mx-auto'
-            >
+            <div key={index} className='relative w-full max-w-[400px] mx-auto'>
               <TicketBackground />
               <div className='absolute top-0 left-0 w-full h-full p-6 text-white'>
                 <div className='flex flex-col items-center h-full justify-center'>
                   {ticket.profilePicture && (
                     <div className='w-24 h-24 rounded-full overflow-hidden mb-4'>
-                      <Image 
-                        src={ticket.profilePicture} 
-                        alt='Profile' 
-                        width={96} 
-                        height={96} 
+                      <Image
+                        src={ticket.profilePicture}
+                        alt='Profile'
+                        width={96}
+                        height={96}
                         className='object-cover'
                       />
                     </div>
@@ -66,6 +63,18 @@ const MyTicketsPage: React.FC = () => {
           ))}
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className='relative bottom-0 left-0 right-0 text-center text-xs text-blue-200 hover:text-cyan-600 transition-colors py-4'>
+        <a
+          href='https://quxpta.codes'
+          target='_blank'
+          rel='noopener noreferrer'
+          className='hover:underline'
+        >
+          🌠 QUxPTA Built
+        </a>
+      </footer>
     </div>
   );
 };
