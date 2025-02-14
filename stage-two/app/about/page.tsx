@@ -163,13 +163,15 @@ const AboutPage: React.FC = () => {
             <div className='flex items-center justify-center h-full'>
               <div className='flex items-center justify-center gap-4'>
                 <Link
-                  href='/create-ticket'
+                  href='https://www.figma.com/community/file/1470800949188681164/event-ticket-booking-ui-open-source-practice-project'
+                  target='_blank'
                   className='border border-[#24A0B5] hover:bg-[#1E8A9D] text-[#24A0B5] font-bold py-3 px-6 rounded-lg transition-colors'
                 >
                   Design File
                 </Link>
                 <Link
-                  href='/events'
+                  href='https://github.com/QUxPTA/HNG/tree/main/stage-two'
+                  target='_blank'
                   className='bg-[#197686] hover:bg-[#76c0cd] text-white font-bold py-3 px-6 rounded-lg transition-colors'
                 >
                   Github Code
