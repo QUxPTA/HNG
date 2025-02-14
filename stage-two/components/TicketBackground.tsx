@@ -1,5 +1,5 @@
 import * as React from 'react';
-const TicketBackground = (props) => (
+const TicketBackground: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   <svg
     width={300}
     height={600}
