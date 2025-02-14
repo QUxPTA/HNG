@@ -80,7 +80,7 @@ const NavBar: React.FC = () => {
 
             {/* Mobile Button */}
             <Link
-              href='/create-ticket'
+              href='/my-tickets'
               className='flex items-center justify-center'
               style={{ maxWidth: '141px', maxHeight: '44px' }}
             >
@@ -102,7 +102,7 @@ const NavBar: React.FC = () => {
           <div className='max-w-[320px] mx-auto bg-transparent'>
             <div className='flex flex-col items-center space-y-4 py-6 text-[#B3B3B3] bg-inherit backdrop-blur-md rounded-b-[24px] shadow-lg'>
               <Link
-                href='/events'
+                href='/'
                 className=' transition-colors font-["JejuMyeongjo"] text-[18px] font-normal'
                 onClick={toggleMenu}
               >
