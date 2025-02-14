@@ -14,7 +14,7 @@ const NavBar: React.FC = () => {
   return (
     <>
       <nav className='fixed top-4 left-0 right-0 z-50 bg-transparent px-4 md:px-12'>
-        <div className='max-w-[1200px] mx-auto h-[76px] px-4 md:px-12 py-4 flex items-center justify-between rounded-[24px] border border-[#197686]'>
+        <div className='max-w-[1200px] mx-auto h-[76px] px-4 md:px-12 py-4 flex items-center justify-between rounded-[24px] border border-[#197686 backdrop-blur-lg'>
           {/* Desktop Logo and Navigation */}
           <div className='hidden md:flex items-center justify-between w-full'>
             <Link href='/' className='flex items-center'>
@@ -31,19 +31,19 @@ const NavBar: React.FC = () => {
             <div className='flex space-x-8 text-[#B3B3B3]'>
               <Link
                 href='/events'
-                className='hover:text-blue-600 transition-colors'
+                className='hover:text-white transition-colors'
               >
                 Events
               </Link>
               <Link
                 href='/my-tickets'
-                className='hover:text-blue-600 transition-colors'
+                className='hover:text-white transition-colors'
               >
                 My Tickets
               </Link>
               <Link
                 href='/about'
-                className='hover:text-blue-600 transition-colors'
+                className='hover:text-white transition-colors'
               >
                 About Project
               </Link>
