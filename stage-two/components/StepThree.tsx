@@ -83,6 +83,20 @@ const StepThree: React.FC = () => {
     }
   }, []);
 
+  const saveTicketToLocalStorage = () => {
+    if (ticketData) {
+      const userTickets = JSON.parse(localStorage.getItem('userTickets') || '[]');
+      const newTicket = {
+        name: ticketData.fullName,
+        email: ticketData.email,
+        ticketType: ticketData.ticketFor,
+        profilePicture: ticketData.avatarUrl
+      };
+      userTickets.push(newTicket);
+      localStorage.setItem('userTickets', JSON.stringify(userTickets));
+    }
+  };
+
   const handleDownloadPDF = async () => {
     if (!ticketRef.current || !ticketData) return;
 
@@ -103,6 +117,9 @@ const StepThree: React.FC = () => {
 
       pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
       pdf.save('techember-ticket.pdf');
+      
+      // Save ticket to local storage before redirecting
+      saveTicketToLocalStorage();
     } catch (error) {
       console.error('Error generating PDF:', error);
     }

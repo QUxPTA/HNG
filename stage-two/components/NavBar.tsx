@@ -29,10 +29,7 @@ const NavBar: React.FC = () => {
 
             {/* Desktop Navigation */}
             <div className='flex space-x-8 text-[#B3B3B3]'>
-              <Link
-                href='/events'
-                className='hover:text-white transition-colors'
-              >
+              <Link href='/' className='hover:text-white transition-colors'>
                 Events
               </Link>
               <Link
@@ -51,7 +48,7 @@ const NavBar: React.FC = () => {
 
             {/* Desktop Button */}
             <Link
-              href='/create-ticket'
+              href='/my-tickets'
               className='flex items-center justify-center hover:bg-opacity-90 transition-colors'
               style={{ maxWidth: '169px', maxHeight: '52px' }}
             >
