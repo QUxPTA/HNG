@@ -559,16 +559,9 @@ const StepTwo: React.FC = () => {
             order-1 sm:order-2
           `}
         >
-          Get My Free Ticket
+          Get My {ticketTypeText} Ticket
         </button>
       </div>
-
-      {/*TODO: Ticket Generation (to be implemented) */}
-      {/* {isSubmitted && (
-        <div className='mt-8'>
-          Ticket details will be rendered here
-        </div>
-      )} */}
     </Card>
   );
 };
