@@ -4,6 +4,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Roboto } from 'next/font/google';
 import Card from './Card';
 import Image from 'next/image';
+import { useTicketContext } from '@/context/TicketContext';
+import { uploadImage } from '@/utils/imageUpload';
 
 const roboto = Roboto({
   subsets: ['latin'],
@@ -11,42 +13,62 @@ const roboto = Roboto({
 });
 
 const StepTwo: React.FC = () => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const {
+    setCurrentStep,
+    ticketType,
+    ticketTypeText,
+    ticketPrice,
+    numberOfTickets,
+  } = useTicketContext();
+
   // Form state
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [specialRequest, setSpecialRequest] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
 
-  // Avatar upload state
-  const [isDragging, setIsDragging] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Validation state
+  // Error state
   const [errors, setErrors] = useState({
     name: '',
     email: '',
     avatarUrl: '',
   });
 
-  // Form submission state
-  const [isSubmitted, setIsSubmitted] = useState(false);
-
-  // Load persisted data on component mount
+  // Load persisted data
   useEffect(() => {
-    const persistedData = localStorage.getItem('ticketFormData');
-    if (persistedData) {
-      const parsedData = JSON.parse(persistedData);
-      setName(parsedData.name || '');
-      setEmail(parsedData.email || '');
-      setSpecialRequest(parsedData.specialRequest || '');
-      setAvatarUrl(parsedData.avatarUrl || '');
+    // Check if on the client side
+    if (typeof window !== 'undefined') {
+      const savedData = localStorage.getItem('stepTwoData');
+      if (savedData) {
+        try {
+          const data = JSON.parse(savedData);
+          setName(data.name || '');
+          setEmail(data.email || '');
+          setSpecialRequest(data.specialRequest || '');
+
+          // Validate the stored avatar URL
+          if (
+            data.avatarUrl &&
+            data.avatarUrl.startsWith('https://i.ibb.co/')
+          ) {
+            setAvatarUrl(data.avatarUrl);
+          }
+        } catch (error) {
+          console.error('Error parsing saved data:', error);
+        }
+      }
     }
-  }, []);
+  }, []); // Empty dependency array means this runs once on mount
 
-  // Persist form data whenever it changes
+  // Save data when it changes
   useEffect(() => {
-    const formData = { name, email, specialRequest, avatarUrl };
-    localStorage.setItem('ticketFormData', JSON.stringify(formData));
+    // Only save if we have a value
+    if (name || email || specialRequest || avatarUrl) {
+      const data = { name, email, specialRequest, avatarUrl };
+      localStorage.setItem('stepTwoData', JSON.stringify(data));
+    }
   }, [name, email, specialRequest, avatarUrl]);
 
   // Validate email format
@@ -55,10 +77,40 @@ const StepTwo: React.FC = () => {
     return re.test(String(email).toLowerCase());
   };
 
-  // Validate Cloudinary URL
-  const validateCloudinaryUrl = (url: string) => {
-    const cloudinaryRegex = /^https?:\/\/res\.cloudinary\.com\/.*\/upload\/.+$/;
-    return cloudinaryRegex.test(url);
+  // Validate name format
+  const validateName = (name: string) => {
+    // Remove leading/trailing whitespace
+    const trimmedName = name.trim();
+
+    // Check if name is empty
+    if (!trimmedName) {
+      return 'Name is required';
+    }
+
+    // Check if name is too short (less than 2 characters)
+    if (trimmedName.length < 2) {
+      return 'Name must be at least 2 characters long';
+    }
+
+    // Check if name contains only letters and spaces
+    const nameRegex = /^[A-Za-z]+(?:\s+[A-Za-z]+)*$/;
+    if (!nameRegex.test(trimmedName)) {
+      return 'Name can only contain letters and spaces';
+    }
+
+    // Check if name has at least two words
+    const words = trimmedName.split(/\s+/);
+    if (words.length < 2) {
+      return 'Please provide both first and last name';
+    }
+
+    // Validate each word
+    const invalidWord = words.find((word) => word.length < 2);
+    if (invalidWord) {
+      return 'Each name part must be at least 2 characters long';
+    }
+
+    return ''; // No errors
   };
 
   // Form validation
@@ -69,81 +121,98 @@ const StepTwo: React.FC = () => {
       avatarUrl: '',
     };
 
-    if (!name.trim()) {
-      newErrors.name = 'Name is required';
+    // Name validation
+    const nameError = validateName(name);
+    if (nameError) {
+      newErrors.name = nameError;
     }
 
+    // Email validation
     if (!email.trim()) {
       newErrors.email = 'Email is required';
     } else if (!validateEmail(email)) {
       newErrors.email = 'Invalid email format';
     }
 
-    // TODO:
-    // if (!avatarUrl) {
-    //   newErrors.avatarUrl = 'Avatar is required';
-    // } else if (!validateCloudinaryUrl(avatarUrl)) {
-    //   newErrors.avatarUrl = 'Invalid Cloudinary URL';
-    // }
+    // Avatar validation
+    if (!avatarUrl) {
+      newErrors.avatarUrl = 'Profile photo is required';
+    }
 
     setErrors(newErrors);
     return Object.values(newErrors).every((error) => error === '');
   };
 
-  // TODO: Handle form submission
-  const handleSubmit = () => {
-    if (validateForm()) {
-      setIsSubmitted(true);
-      // Add logic for ticket generation
-    }
-  };
+  // Handle file upload
+  const handleFileUpload = async (file: File) => {
+    try {
+      setIsUploading(true);
+      const url = await uploadImage(file);
 
-  // TODO: Handle going back to previous step
-  const handleBack = () => {
-    // Implement navigation back to previous step
+      // Validate the URL before setting
+      if (url && url.startsWith('https://i.ibb.co/')) {
+        setAvatarUrl(url);
+        setErrors((prev) => ({ ...prev, avatarUrl: '' }));
+      } else {
+        throw new Error('Invalid image URL');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      setErrors((prev) => ({
+        ...prev,
+        avatarUrl: 'Failed to upload image. Please try again.',
+      }));
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   // Handle file selection
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const imageUrl = event.target?.result as string;
-        setAvatarUrl(imageUrl);
-      };
-      reader.readAsDataURL(file);
+      await handleFileUpload(file);
     }
   };
 
-  // Drag and drop handlers
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(true);
+  // Handle click on upload area
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
   };
 
-  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+  // Handle drag and drop
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(false);
     const file = e.dataTransfer.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const imageUrl = event.target?.result as string;
-        setAvatarUrl(imageUrl);
-      };
-      reader.readAsDataURL(file);
+      await handleFileUpload(file);
     }
   };
 
-  // Trigger file input click
-  const handleFileInputClick = () => {
-    fileInputRef.current?.click();
+  // Handle form submission
+  const handleSubmit = () => {
+    if (validateForm()) {
+      // Save all data to localStorage
+      const allData = {
+        ticketType,
+        ticketTypeText,
+        ticketPrice,
+        numberOfTickets,
+        name,
+        email,
+        specialRequest,
+        avatarUrl,
+      };
+      localStorage.setItem('ticketData', JSON.stringify(allData));
+
+      // Move to next step
+      setCurrentStep(3);
+    }
+  };
+
+  // Handle going back
+  const handleBack = () => {
+    setCurrentStep(1);
   };
 
   return (
@@ -180,9 +249,9 @@ const StepTwo: React.FC = () => {
               cursor-pointer
               overflow-hidden
             '
-            onClick={handleFileInputClick}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
+            onClick={handleUploadClick}
+            onDragOver={(e) => e.preventDefault()}
+            onDragLeave={(e) => e.preventDefault()}
             onDrop={handleDrop}
           >
             <input
@@ -191,15 +260,19 @@ const StepTwo: React.FC = () => {
               onChange={handleFileSelect}
               accept='image/*'
               className='hidden'
+              style={{ display: 'none' }}
             />
 
             {avatarUrl ? (
               <div className='absolute inset-0 rounded-[12px] overflow-hidden'>
                 <Image
                   src={avatarUrl}
-                  alt='Uploaded Avatar'
                   fill
-                  className='object-cover h-full w-full'
+                  alt='Uploaded Avatar'
+                  style={{ objectFit: 'cover' }}
+                  className='h-full w-full'
+                  sizes='(max-width: 240px) 100vw, 240px'
+                  priority
                 />
                 <div
                   className='
@@ -220,7 +293,7 @@ const StepTwo: React.FC = () => {
                   <svg
                     width='32'
                     height='32'
-                    viewBox='0 0  32 32'
+                    viewBox='0 0 32 32'
                     fill='none'
                     xmlns='http://www.w3.org/2000/svg'
                     className='mx-auto mb-4'
@@ -240,7 +313,8 @@ const StepTwo: React.FC = () => {
                       ${roboto.className}
                       text-[16px]
                       text-white
-                      text-center
+                      text-center 
+                      p-6
                     `}
                   >
                     Drag & drop or click to upload
@@ -280,20 +354,20 @@ const StepTwo: React.FC = () => {
               </>
             )}
 
-            {isDragging && (
+            {isUploading && (
               <div
                 className='
-                absolute 
-                inset-0 
-                bg-black 
-                bg-opacity-50 
-                flex 
-                justify-center 
-                items-center
-                text-white
-              '
+                  absolute 
+                  inset-0 
+                  bg-black 
+                  bg-opacity-50 
+                  flex 
+                  justify-center 
+                  items-center
+                  text-white
+                '
               >
-                Drop here
+                Uploading...
               </div>
             )}
           </div>
@@ -312,39 +386,44 @@ const StepTwo: React.FC = () => {
       ></div>
 
       {/* Name Input */}
-      <p
-        className={`
-          ${roboto.className} 
+      <div className='w-full mb-6 relative'>
+        <label
+          htmlFor='name'
+          className={`
+        ${roboto.className} 
           text-[16px] 
           text-white 
           font-normal 
           text-start 
           mb-2
-        `}
-      >
-        Enter your name
-      </p>
-      <div className='w-full mb-6'>
-        <input
-          type='text'
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className={`
-            ${roboto.className}
-            w-full 
-            bg-transparent 
-            text-white 
-            px-4 
-            py-3 
-            rounded-[8px] 
-            border 
-            border-[#24A0B5] 
-            focus:outline-none
           `}
-        />
-        {errors.name && (
-          <p className='text-red-500 text-sm mt-1'>{errors.name}</p>
-        )}
+        >
+          Enter Your Name
+        </label>
+        <div className='mt-2'>
+          <input
+            type='text'
+            id='name'
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className={`
+              ${roboto.className} 
+              w-full 
+              p-3 
+              rounded-lg 
+              bg-transparent
+              text-white 
+              border 
+              ${errors.name ? 'border-red-500' : 'border-[#24A0B5]'}
+              focus:outline-none 
+              focus:ring-2 
+              focus:ring-[#24A0B5]
+            `}
+          />
+          {errors.name && (
+            <p className='text-red-500 text-sm mt-1'>{errors.name}</p>
+          )}
+        </div>
       </div>
 
       {/* Email Input */}
@@ -458,7 +537,7 @@ const StepTwo: React.FC = () => {
         </button>
         <button
           onClick={handleSubmit}
-          disabled={!name || !email}
+          disabled={!name || !email || !avatarUrl}
           className={`
             jeju-myeongjo
             w-full sm:w-1/2
@@ -480,12 +559,11 @@ const StepTwo: React.FC = () => {
       </div>
 
       {/*TODO: Ticket Generation (to be implemented) */}
-      {isSubmitted && (
+      {/* {isSubmitted && (
         <div className='mt-8'>
-          {/* Ticket details will be rendered here */}
-          <p>Ticket Generated Successfully!</p>
+          Ticket details will be rendered here
         </div>
-      )}
+      )} */}
     </Card>
   );
 };
