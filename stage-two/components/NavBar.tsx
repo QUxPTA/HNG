@@ -49,7 +49,7 @@ const NavBar: React.FC = () => {
             {/* Desktop Button */}
             <Link
               href='/my-tickets'
-              className='flex items-center justify-center hover:bg-opacity-90 transition-colors'
+              className='flex items-center justify-center hover:bg-opacity-90 transition-colors group'
               style={{ maxWidth: '169px', maxHeight: '52px' }}
             >
               <Image
@@ -57,7 +57,14 @@ const NavBar: React.FC = () => {
                 alt='My Tickets'
                 width={169}
                 height={52}
-                className='w-full h-full'
+                className='w-full h-full group-hover:hidden'
+              />
+              <Image
+                src='/myTicketsHover.svg'
+                alt='My Tickets Hover'
+                width={169}
+                height={52}
+                className='w-full h-full hidden group-hover:block'
               />
             </Link>
           </div>
@@ -81,7 +88,7 @@ const NavBar: React.FC = () => {
             {/* Mobile Button */}
             <Link
               href='/my-tickets'
-              className='flex items-center justify-center'
+              className='flex items-center justify-center group'
               style={{ maxWidth: '141px', maxHeight: '44px' }}
             >
               <Image
@@ -89,7 +96,14 @@ const NavBar: React.FC = () => {
                 alt='My Tickets'
                 width={141}
                 height={44}
-                className='w-full h-full'
+                className='w-full h-full group-hover:hidden'
+              />
+              <Image
+                src='/myTicketsHover.svg'
+                alt='My Tickets Hover'
+                width={141}
+                height={44}
+                className='w-full h-full hidden group-hover:block'
               />
             </Link>
           </div>
