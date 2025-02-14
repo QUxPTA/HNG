@@ -7,10 +7,10 @@ import { Road_Rage } from 'next/font/google';
 import Card from './Card';
 import TicketBackground from '@/components/TicketBackground';
 import Image from 'next/image';
-import JsBarcode from 'jsbarcode';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { useRouter } from 'next/navigation';
+import { useTicketContext } from '@/context/TicketContext';
 
 const alatsi = Alatsi({
   weight: ['400'],
@@ -36,40 +36,59 @@ interface UserTicketData {
   specialRequest?: string;
 }
 
-const DUMMY_TICKET_DATA: UserTicketData = {
-  fullName: 'Avi Chukwu',
-  email: 'user@email.com',
-  avatarUrl: 'https://i.pravatar.cc/140?img=12',
-  ticketType: 'VIP',
-  ticketFor: '1',
-  specialRequest:
-    'Nil ? Of the users sad story they write in there gets this whole space. Max of three rows',
-};
-
 const StepThree: React.FC = () => {
   const router = useRouter();
-  const [ticketData] = useState<UserTicketData>(DUMMY_TICKET_DATA);
-  const barcodeRef = useRef<SVGSVGElement>(null);
+  const [ticketData, setTicketData] = useState<UserTicketData | null>(null);
   const ticketRef = useRef<HTMLDivElement>(null);
+  const { resetContext } = useTicketContext(); // Get resetContext function from hook
+
+  // Generate unique ticket code
+  const generateTicketCode = () => {
+    const prefix = 'TECH';
+    const randomPart = Math.random()
+      .toString(36)
+      .substring(2, 10)
+      .toUpperCase();
+    return `${prefix}-${randomPart}`;
+  };
 
   useEffect(() => {
-    if (barcodeRef.current) {
-      // Generate barcode from avatar URL
-      JsBarcode(barcodeRef.current, ticketData.avatarUrl, {
-        format: 'CODE128',
-        width: 2,
-        height: 50,
-        displayValue: false,
-        background: 'transparent',
-        lineColor: '#fff',
-      });
+    // Retrieve data from localStorage
+    const stepOneData = localStorage.getItem('stepOneData');
+    const stepTwoData = localStorage.getItem('stepTwoData');
+
+    if (stepOneData && stepTwoData) {
+      try {
+        const stepOne = JSON.parse(stepOneData);
+        const stepTwo = JSON.parse(stepTwoData);
+
+        // Combine data from both steps
+        const combinedData: UserTicketData = {
+          fullName: stepTwo.name,
+          email: stepTwo.email,
+          avatarUrl: stepTwo.avatarUrl,
+          ticketType: stepOne.ticketTypeText,
+          ticketFor: stepOne.numberOfTickets.toString(),
+          specialRequest: stepTwo.specialRequest || '',
+        };
+
+        // Generate and store ticket code
+        const ticketCode = generateTicketCode();
+        localStorage.setItem('ticketCode', ticketCode);
+
+        setTicketData(combinedData);
+      } catch (error) {
+        console.error('Error parsing ticket data:', error);
+      }
     }
-  }, [ticketData.avatarUrl]);
+  }, []);
 
   const handleDownloadPDF = async () => {
-    if (!ticketRef.current) return;
+    if (!ticketRef.current || !ticketData) return;
 
     try {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
       const canvas = await html2canvas(ticketRef.current, {
         scale: 2,
         backgroundColor: null,
@@ -90,6 +109,10 @@ const StepThree: React.FC = () => {
   };
 
   const handleBookAnother = () => {
+    // Reset context and clear localStorage
+    resetContext();
+
+    // Navigate back to home/first step
     router.push('/');
   };
 
@@ -126,19 +149,21 @@ const StepThree: React.FC = () => {
                   </p>
 
                   <div className='flex flex-col items-center mt-3 flex-grow'>
-                    <div className='border-[3px] border-[#24A0B5] rounded-lg w-[100px] h-[100px] flex items-center justify-center overflow-hidden bg-[#24A0B5]/20'>
-                      <Image
-                        src={ticketData.avatarUrl}
-                        alt={`${ticketData.fullName}'s avatar`}
-                        width={100}
-                        height={100}
-                        className='rounded-[6px] object-cover'
-                        priority
-                      />
+                    <div className='border-[4px] border-[#24A0B5] rounded-lg w-[140px] h-[140px] flex items-center justify-center overflow-hidden bg-[#24A0B5]/20'>
+                      {ticketData && (
+                        <Image
+                          src={ticketData.avatarUrl}
+                          alt={`${ticketData.fullName}'s avatar`}
+                          width={100}
+                          height={100}
+                          className='rounded-[6px] object-cover w-full h-full'
+                          priority
+                        />
+                      )}
                     </div>
 
-                    <div className='w-full mt-4'>
-                      <div className='bg-[#24A0B5]/5 rounded-xl border border-[#24A0B5]/20 w-full'>
+                    <div className='w-full m-1'>
+                      <div className='bg-[#24A0B5]/5 rounded-xl border border-[#24A0B5]/20 w-full p'>
                         <div className='border-b border-[#24A0B5]/20'>
                           <div className='grid grid-cols-2 divide-x divide-[#24A0B5]/20'>
                             <div className='p-2.5'>
@@ -147,11 +172,13 @@ const StepThree: React.FC = () => {
                               >
                                 Enter your name
                               </p>
-                              <p
-                                className={`${roboto.className} text-[12px] font-bold text-white mt-0.5 truncate`}
-                              >
-                                {ticketData.fullName}
-                              </p>
+                              {ticketData && (
+                                <p
+                                  className={`${roboto.className} text-[12px] font-bold text-white mt-0.5 truncate`}
+                                >
+                                  {ticketData.fullName}
+                                </p>
+                              )}
                             </div>
                             <div className='p-2.5'>
                               <p
@@ -159,11 +186,13 @@ const StepThree: React.FC = () => {
                               >
                                 Enter your email*
                               </p>
-                              <p
-                                className={`${roboto.className} text-[12px] font-bold text-white mt-0.5 truncate`}
-                              >
-                                {ticketData.email}
-                              </p>
+                              {ticketData && (
+                                <p
+                                  className={`${roboto.className} text-[12px] font-bold text-white mt-0.5 truncate`}
+                                >
+                                  {ticketData.email}
+                                </p>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -176,11 +205,13 @@ const StepThree: React.FC = () => {
                               >
                                 Ticket type
                               </p>
-                              <p
-                                className={`${roboto.className} text-[12px] font-bold text-white mt-0.5 truncate`}
-                              >
-                                {ticketData.ticketType}
-                              </p>
+                              {ticketData && (
+                                <p
+                                  className={`${roboto.className} text-[12px] font-bold text-white mt-0.5 truncate`}
+                                >
+                                  {ticketData.ticketType}
+                                </p>
+                              )}
                             </div>
                             <div className='p-2.5'>
                               <p
@@ -188,11 +219,13 @@ const StepThree: React.FC = () => {
                               >
                                 Ticket for
                               </p>
-                              <p
-                                className={`${roboto.className} text-[12px] font-bold text-white mt-0.5 truncate`}
-                              >
-                                {ticketData.ticketFor}
-                              </p>
+                              {ticketData && (
+                                <p
+                                  className={`${roboto.className} text-[12px] font-bold text-white mt-0.5 truncate`}
+                                >
+                                  {ticketData.ticketFor}
+                                </p>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -203,11 +236,13 @@ const StepThree: React.FC = () => {
                           >
                             Special request?
                           </p>
-                          {ticketData.specialRequest && (
+                          {ticketData && ticketData.specialRequest && (
                             <p
                               className={`${roboto.className} text-[12px] font-bold text-white mt-0.5 line-clamp-2`}
                             >
-                              {ticketData.specialRequest}
+                              {ticketData.specialRequest
+                                ? ticketData.specialRequest
+                                : 'No Special request'}
                             </p>
                           )}
                         </div>
@@ -217,7 +252,13 @@ const StepThree: React.FC = () => {
                 </div>
 
                 <div className='w-full flex justify-center mt-10'>
-                  <svg ref={barcodeRef} className='w-full max-w-[180px]'></svg>
+                  <Image
+                    src='/barCode.svg'
+                    alt='Ticket Barcode'
+                    width={236}
+                    height={68}
+                    className='w-full'
+                  />
                 </div>
               </div>
               <TicketBackground />

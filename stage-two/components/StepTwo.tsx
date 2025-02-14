@@ -192,18 +192,23 @@ const StepTwo: React.FC = () => {
   // Handle form submission
   const handleSubmit = () => {
     if (validateForm()) {
-      // Save all data to localStorage
-      const allData = {
+      // Save ticket type data from context
+      const stepOneData = {
         ticketType,
         ticketTypeText,
         ticketPrice,
         numberOfTickets,
+      };
+      localStorage.setItem('stepOneData', JSON.stringify(stepOneData));
+
+      // Save attendee details
+      const stepTwoData = {
         name,
         email,
         specialRequest,
         avatarUrl,
       };
-      localStorage.setItem('ticketData', JSON.stringify(allData));
+      localStorage.setItem('stepTwoData', JSON.stringify(stepTwoData));
 
       // Move to next step
       setCurrentStep(3);

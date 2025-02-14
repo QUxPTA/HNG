@@ -4,6 +4,7 @@ import React from 'react';
 import StepOne from '@/components/StepOne';
 import StepTwo from '@/components/StepTwo';
 import { TicketProvider, useTicketContext } from '@/context/TicketContext';
+import StepThree from '@/components/StepThree';
 
 const TicketContent = () => {
   const { currentStep } = useTicketContext();
@@ -12,6 +13,7 @@ const TicketContent = () => {
     <>
       {currentStep === 1 && <StepOne />}
       {currentStep === 2 && <StepTwo />}
+      {currentStep === 3 && <StepThree />}
     </>
   );
 };

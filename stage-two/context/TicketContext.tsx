@@ -13,6 +13,7 @@ type TicketContextType = {
   setTicketTypeText: (text: string) => void;
   ticketPrice: string;
   setTicketPrice: (price: string) => void;
+  resetContext: () => void;
 };
 
 const TicketContext = createContext<TicketContextType | undefined>(undefined);
@@ -24,6 +25,20 @@ export function TicketProvider({ children }: { children: React.ReactNode }) {
   const [numberOfTickets, setNumberOfTickets] = useState(1);
   const [ticketTypeText, setTicketTypeText] = useState('');
   const [ticketPrice, setTicketPrice] = useState('');
+
+  // Reset all context values to initial state
+  const resetContext = () => {
+    setCurrentStep(1);
+    setTicketType(null);
+    setNumberOfTickets(1);
+    setTicketTypeText('');
+    setTicketPrice('');
+    
+    // Clear localStorage
+    localStorage.removeItem('stepOneData');
+    localStorage.removeItem('stepTwoData');
+    localStorage.removeItem('ticketCode');
+  };
 
   // Initialize from localStorage on client side
   useEffect(() => {
@@ -70,6 +85,7 @@ export function TicketProvider({ children }: { children: React.ReactNode }) {
         setTicketTypeText,
         ticketPrice,
         setTicketPrice,
+        resetContext,
       }}
     >
       {children}
