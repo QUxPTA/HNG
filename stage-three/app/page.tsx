@@ -12,6 +12,7 @@ export interface Message {
   translation?: {
     fromLanguage: string;
     toLanguage: string;
+    translatedText?: string;
   };
   detectedLanguage?: {
     language: string;
@@ -19,7 +20,7 @@ export interface Message {
   };
 }
 
-const LANGUAGE_NAMES = {
+const LANGUAGE_NAMES: { [key: string]: string } = {
   en: 'English',
   pt: 'Portuguese',
   es: 'Spanish',
@@ -35,7 +36,7 @@ const LANGUAGE_NAMES = {
 
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [selectedLanguage, setSelectedLanguage] = useState('en');
+  const [selectedLanguage, setSelectedLanguage] = useState<string>('');
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showLanguageSelector, setShowLanguageSelector] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false);
@@ -178,37 +179,98 @@ export default function Home() {
     setMessages((prevMessages) => [...prevMessages, newMessage, aiResponse]);
   };
 
-  const handleTranslate = (messageId: string, fromLanguage: string) => {
-    setIsTranslating(true);
-    setTranslationTarget({ messageId, fromLanguage });
+  const handleTranslate = async (messageId: string, fromLanguage: string) => {
+    // Check if Translator API is supported
+    if (!('ai' in window) || !('translator' in (window as any).ai)) {
+      alert('Translation is not supported in this browser.');
+      return;
+    }
+
+    // Open language selector and set initial translation target
     setShowLanguageSelector(true);
+    setTranslationTarget({ messageId, fromLanguage });
+    // Reset selected language to ensure a new selection
+    setSelectedLanguage('');
   };
 
-  const handleLanguageChange = (toLanguage: string) => {
-    // Update the last message with translation info
-    if (translationTarget) {
-      setMessages((prevMessages) =>
-        prevMessages.map((msg) => {
-          if (msg.id === translationTarget.messageId) {
-            return {
-              ...msg,
-              translation: {
-                fromLanguage: translationTarget.fromLanguage,
-                toLanguage,
-              },
-            };
-          }
-          return msg;
-        })
+  const performTranslation = async (targetLanguage?: string) => {
+    const languageToUse = targetLanguage || selectedLanguage;
+
+    if (!translationTarget || !languageToUse) return;
+
+    // Prevent translation to the same language
+    if (translationTarget.fromLanguage === languageToUse) {
+      alert('Please select a different language for translation.');
+      setShowLanguageSelector(false);
+      return;
+    }
+
+    setIsTranslating(true);
+
+    try {
+      // Check language pair availability
+      const translatorCapabilities = await (window as any).ai.translator.capabilities();
+      const pairAvailability = translatorCapabilities.languagePairAvailable(
+        translationTarget.fromLanguage, 
+        languageToUse
       );
 
+      if (pairAvailability === 'no') {
+        alert(`Translation from ${translationTarget.fromLanguage} to ${languageToUse} is not supported.`);
+        setIsTranslating(false);
+        return;
+      }
+
+      // Create translator
+      const translator = await (window as any).ai.translator.create({
+        sourceLanguage: translationTarget.fromLanguage,
+        targetLanguage: languageToUse,
+        monitor: (m: any) => {
+          m.addEventListener('downloadprogress', (e: any) => {
+            console.log(`Downloaded ${e.loaded} of ${e.total} bytes.`);
+          });
+        }
+      });
+
+      // Find the message to translate
+      const messageToTranslate = messages.find(msg => msg.id === translationTarget.messageId);
+      
+      if (messageToTranslate) {
+        // Perform translation
+        const translatedText = await translator.translate(messageToTranslate.text);
+
+        // Update messages with translation
+        setMessages(prevMessages => 
+          prevMessages.map(msg => {
+            if (msg.id === translationTarget.messageId) {
+              return {
+                ...msg,
+                translation: {
+                  fromLanguage: translationTarget.fromLanguage,
+                  toLanguage: languageToUse,
+                  translatedText: translatedText
+                }
+              };
+            }
+            return msg;
+          })
+        );
+      }
+    } catch (error) {
+      console.error('Translation error:', error);
+      alert('Failed to translate the text.');
+    } finally {
       // Reset translation state
       setTranslationTarget(null);
       setIsTranslating(false);
+      setShowLanguageSelector(false);
     }
+  };
 
-    // Close language selector
-    setShowLanguageSelector(false);
+  const handleLanguageChange = (toLanguage: string) => {
+    // Always set the selected language and trigger translation
+    setSelectedLanguage(toLanguage);
+    performTranslation(toLanguage);
   };
 
   const toggleDarkMode = () => {
@@ -237,7 +299,7 @@ export default function Home() {
 
         <div className='flex flex-col flex-grow overflow-hidden'>
           <div className='flex-grow overflow-y-auto'>
-            <OutputArea messages={messages} onTranslate={handleTranslate} />
+            <OutputArea messages={messages} onTranslate={handleTranslate} isTranslating={isTranslating} />
             <LanguageSelector
               isOpen={showLanguageSelector}
               onClose={() => setShowLanguageSelector(false)}
