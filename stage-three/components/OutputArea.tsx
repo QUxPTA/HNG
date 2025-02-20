@@ -1,4 +1,5 @@
 import React, { useRef, useEffect } from 'react';
+import { UserIcon, SparklesIcon } from '@heroicons/react/24/solid';
 import { Message } from '@/app/page';
 
 interface OutputAreaProps {
@@ -30,14 +31,35 @@ const OutputArea: React.FC<OutputAreaProps> = ({ messages, onTranslate }) => {
           }`}
         >
           <div 
-            className={`p-3 rounded-lg max-w-xl ${
+            className={`flex items-center space-x-2 max-w-xl ${
               message.type === 'user' 
-                ? 'bg-blue-100 text-blue-900 dark:bg-blue-900 dark:text-blue-100' 
-                : 'bg-gray-100 text-gray-900 dark:bg-gray-700 dark:text-gray-100'
-            } transition-colors duration-300`}
+                ? 'flex-row-reverse space-x-reverse' 
+                : ''
+            }`}
           >
-            <p>{message.text}</p>
+            {message.type === 'user' ? (
+              <UserIcon 
+                className="h-8 w-8 text-blue-600 dark:text-blue-400 flex-shrink-0" 
+                aria-label="User message" 
+              />
+            ) : (
+              <SparklesIcon 
+                className="h-8 w-8 text-green-600 dark:text-green-400 flex-shrink-0" 
+                aria-label="AI message" 
+              />
+            )}
+            
+            <div 
+              className={`p-3 rounded-lg ${
+                message.type === 'user' 
+                  ? 'bg-blue-100 text-blue-900 dark:bg-blue-900 dark:text-blue-100' 
+                  : 'bg-gray-100 text-gray-900 dark:bg-gray-700 dark:text-gray-100'
+              } transition-colors duration-300`}
+            >
+              <p>{message.text}</p>
+            </div>
           </div>
+          
           {message.type === 'ai' && onTranslate && (
             <button 
               onClick={onTranslate}
