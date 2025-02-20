@@ -4,8 +4,22 @@ import { Message } from '@/app/page';
 
 interface OutputAreaProps {
   messages: Message[];
-  onTranslate?: () => void;
+  onTranslate: (messageId: string, fromLanguage: string) => void;
 }
+
+const LANGUAGE_NAMES = {
+  'en': 'English',
+  'pt': 'Portuguese',
+  'es': 'Spanish',
+  'ru': 'Russian',
+  'tr': 'Turkish',
+  'fr': 'French',
+  'de': 'German',
+  'it': 'Italian',
+  'zh': 'Chinese',
+  'ja': 'Japanese',
+  'ko': 'Korean',
+};
 
 const OutputArea: React.FC<OutputAreaProps> = ({ messages, onTranslate }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -57,12 +71,26 @@ const OutputArea: React.FC<OutputAreaProps> = ({ messages, onTranslate }) => {
               } transition-colors duration-300`}
             >
               <p>{message.text}</p>
+              
+              {message.type === 'user' && message.detectedLanguage && (
+                <div className="mt-2 text-xs text-gray-600 dark:text-gray-400 italic">
+                  Detected Language: {LANGUAGE_NAMES[message.detectedLanguage.language] || message.detectedLanguage.language} 
+                  {' '}(Confidence: {(message.detectedLanguage.confidence * 100).toFixed(2)}%)
+                </div>
+              )}
+              
+              {message.type === 'ai' && message.translation && (
+                <div className="mt-2 text-xs text-gray-600 dark:text-gray-400 italic">
+                  Translated from {LANGUAGE_NAMES[message.translation.fromLanguage]} 
+                  {' '}to {LANGUAGE_NAMES[message.translation.toLanguage]}
+                </div>
+              )}
             </div>
           </div>
           
-          {message.type === 'ai' && onTranslate && (
+          {message.type === 'user' && (
             <button 
-              onClick={onTranslate}
+              onClick={() => onTranslate(message.id, message.detectedLanguage?.language || 'en')}
               className="mt-2 px-4 py-2 bg-green-500 dark:bg-green-700 
                 text-white rounded-lg 
                 hover:bg-green-600 dark:hover:bg-green-800 

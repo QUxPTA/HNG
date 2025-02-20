@@ -9,17 +9,48 @@ export interface Message {
   id: string;
   text: string;
   type: 'user' | 'ai';
+  translation?: {
+    fromLanguage: string;
+    toLanguage: string;
+  };
+  detectedLanguage?: {
+    language: string;
+    confidence: number;
+  };
 }
+
+const LANGUAGE_NAMES = {
+  en: 'English',
+  pt: 'Portuguese',
+  es: 'Spanish',
+  ru: 'Russian',
+  tr: 'Turkish',
+  fr: 'French',
+  de: 'German',
+  it: 'Italian',
+  zh: 'Chinese',
+  ja: 'Japanese',
+  ko: 'Korean',
+};
 
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedLanguage, setSelectedLanguage] = useState('en');
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showLanguageSelector, setShowLanguageSelector] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [translationTarget, setTranslationTarget] = useState<{
+    messageId: string;
+    fromLanguage: string;
+  } | null>(null);
+  const [languageDetector, setLanguageDetector] = useState<any>(null);
+  const [languageDetectorStatus, setLanguageDetectorStatus] =
+    useState<string>('initializing');
 
   // Effect to detect dark mode preference on client side
   useEffect(() => {
-    const prefersDarkMode = window.matchMedia && 
+    const prefersDarkMode =
+      window.matchMedia &&
       window.matchMedia('(prefers-color-scheme: dark)').matches;
     setIsDarkMode(prefersDarkMode);
   }, []);
@@ -34,12 +65,84 @@ export default function Home() {
     }
   }, [isDarkMode]);
 
-  // Toggle dark mode
-  const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
+  // Language detection initialization effect
+  useEffect(() => {
+    const initLanguageDetector = async () => {
+      // Check if Language Detection API is available
+      if (!('ai' in window) || !('languageDetector' in (window as any).ai)) {
+        alert(
+          'This application is not supported in your browser. For best performance, please use Chrome 132-135'
+        );
+        return;
+      }
+
+      try {
+        const capabilities = await (
+          window as any
+        ).ai.languageDetector.capabilities();
+        setLanguageDetectorStatus(capabilities);
+
+        if (capabilities === 'no') {
+          alert(
+            'Language Detection is currently unavailable. Please try again later.'
+          );
+          return;
+        }
+
+        let detector;
+        if (capabilities === 'readily') {
+          detector = await (window as any).ai.languageDetector.create();
+        } else {
+          detector = await (window as any).ai.languageDetector.create({
+            monitor(m: any) {
+              m.addEventListener('downloadprogress', (e: any) => {
+                console.log(`Downloaded ${e.loaded} of ${e.total} bytes.`);
+              });
+            },
+          });
+          await detector.ready;
+        }
+
+        setLanguageDetector(detector);
+      } catch (error) {
+        console.error('Language Detector initialization error:', error);
+        alert(
+          'Failed to initialize Language Detection. Please try again later.'
+        );
+      }
+    };
+
+    initLanguageDetector();
+  }, []);
+
+  const detectLanguage = async (text: string) => {
+    if (!languageDetector) {
+      // Only show alert if language detection was expected to be available
+      if (languageDetectorStatus !== 'initializing') {
+        alert(
+          'Language Detection is not available. Translation may be less accurate.'
+        );
+      }
+      return null;
+    }
+
+    try {
+      const results = await languageDetector.detect(text);
+      // Return the most confident result
+      return results.length > 0
+        ? {
+            language: results[0].detectedLanguage,
+            confidence: results[0].confidence,
+          }
+        : null;
+    } catch (error) {
+      console.error('Language detection error:', error);
+      alert('Failed to detect language. Translation may be less accurate.');
+      return null;
+    }
   };
 
-  const handleSendText = (text: string) => {
+  const handleSendText = async (text: string) => {
     // Use crypto.randomUUID() for consistent ID generation
     const newMessage: Message = {
       id: crypto.randomUUID(),
@@ -47,13 +150,69 @@ export default function Home() {
       type: 'user',
     };
 
+    let detectedLanguage = null;
+    try {
+      // Only attempt language detection if the API is available
+      if ('ai' in window && 'languageDetector' in (window as any).ai) {
+        detectedLanguage = await detectLanguage(text);
+      }
+    } catch (error) {
+      console.error('Language detection error:', error);
+    }
+
+    if (detectedLanguage) {
+      newMessage.detectedLanguage = detectedLanguage;
+    }
+
     const aiResponse: Message = {
       id: crypto.randomUUID(),
-      text: 'Processing your request...',
+      text: detectedLanguage
+        ? `Detected language: ${
+            LANGUAGE_NAMES[detectedLanguage.language] ||
+            detectedLanguage.language
+          }`
+        : 'Unable to detect language automatically',
       type: 'ai',
     };
 
     setMessages((prevMessages) => [...prevMessages, newMessage, aiResponse]);
+  };
+
+  const handleTranslate = (messageId: string, fromLanguage: string) => {
+    setIsTranslating(true);
+    setTranslationTarget({ messageId, fromLanguage });
+    setShowLanguageSelector(true);
+  };
+
+  const handleLanguageChange = (toLanguage: string) => {
+    // Update the last message with translation info
+    if (translationTarget) {
+      setMessages((prevMessages) =>
+        prevMessages.map((msg) => {
+          if (msg.id === translationTarget.messageId) {
+            return {
+              ...msg,
+              translation: {
+                fromLanguage: translationTarget.fromLanguage,
+                toLanguage,
+              },
+            };
+          }
+          return msg;
+        })
+      );
+
+      // Reset translation state
+      setTranslationTarget(null);
+      setIsTranslating(false);
+    }
+
+    // Close language selector
+    setShowLanguageSelector(false);
+  };
+
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode);
   };
 
   return (
@@ -78,21 +237,16 @@ export default function Home() {
 
         <div className='flex flex-col flex-grow overflow-hidden'>
           <div className='flex-grow overflow-y-auto'>
-            <OutputArea 
-              messages={messages} 
-              onTranslate={() => setShowLanguageSelector(true)}
-            />
+            <OutputArea messages={messages} onTranslate={handleTranslate} />
             <LanguageSelector
               isOpen={showLanguageSelector}
               onClose={() => setShowLanguageSelector(false)}
-              onLanguageChange={setSelectedLanguage}
+              onLanguageChange={handleLanguageChange}
               selectedLanguage={selectedLanguage}
             />
           </div>
 
-          <TextInput 
-            onSendText={handleSendText} 
-          />
+          <TextInput onSendText={handleSendText} />
         </div>
       </div>
     </div>

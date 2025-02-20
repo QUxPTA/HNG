@@ -24,6 +24,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang='en' className='dark:bg-gray-900'>
+      <head>
+        <meta
+          httpEquiv='origin-trial'
+          content={process.env.NEXT_PUBLIC_ORIGIN_TRIAL_TOKEN}
+        />
+      </head>
       <body
         className={`${inter.className} bg-gray-100 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300`}
       >
