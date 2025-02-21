@@ -87,6 +87,10 @@ errors.
 
 ## Getting Started
 
+**Important Notice:** 💡
+
+This project involves using **experimental features** in the Chrome browser. Please make sure to **turn on the experimental feature flag** in your Chrome browser to access these native AI APIs. Please refer to the [Chrome AI documentation](https://developer.chrome.com/docs/ai/get-started) for more information.
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 First, run the development server:
