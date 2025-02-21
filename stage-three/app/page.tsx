@@ -186,17 +186,34 @@ export default function Home() {
       return;
     }
 
+    // Find the message to translate
+    const messageToTranslate = messages.find(msg => msg.id === messageId);
+
+    // Prevent re-translation of already translated text
+    if (messageToTranslate?.translation?.translatedText) {
+      alert('This text has already been translated. Choose a different language or message.');
+      return;
+    }
+
     // Open language selector and set initial translation target
     setShowLanguageSelector(true);
     setTranslationTarget({ messageId, fromLanguage });
-    // Reset selected language to ensure a new selection
-    setSelectedLanguage('');
   };
 
   const performTranslation = async (targetLanguage?: string) => {
     const languageToUse = targetLanguage || selectedLanguage;
 
     if (!translationTarget || !languageToUse) return;
+
+    // Find the message to translate again to ensure it hasn't been translated
+    const messageToTranslate = messages.find(msg => msg.id === translationTarget.messageId);
+    
+    // Additional check to prevent re-translation
+    if (messageToTranslate?.translation?.translatedText) {
+      alert('This text has already been translated. Choose a different language or message.');
+      setShowLanguageSelector(false);
+      return;
+    }
 
     // Prevent translation to the same language
     if (translationTarget.fromLanguage === languageToUse) {
