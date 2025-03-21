@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import NavBar from '@/components/NavBar';
-import { SpeedInsights } from '@vercel/speed-insights/next';
 
 export const metadata: Metadata = {
   title: 'Conference Ticket Generator',
@@ -18,7 +17,6 @@ export default function RootLayout({
       <body className='font-["JejuMyeongjo"] antialiased pt-[80px]'>
         <NavBar />
         {children}
-        <SpeedInsights />
       </body>
     </html>
   );
